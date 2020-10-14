@@ -6,10 +6,36 @@ using Microsoft.AspNet.Identity.EntityFramework;
 
 namespace Account.Models
 {
-    // You can add profile data for the user by adding more properties to your ApplicationUser class, please visit https://go.microsoft.com/fwlink/?LinkID=317594 to learn more.
-    public class ApplicationUser : IdentityUser
+    // New derived classes
+    public class UserRole : IdentityUserRole<int>
     {
-        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(UserManager<ApplicationUser> manager)
+    }
+
+    public class UserClaim : IdentityUserClaim<int>
+    {
+    }
+
+    public class UserLogin : IdentityUserLogin<int>
+    {
+    }
+
+    public class UserStore : UserStore<ApplicationUser, Role, int,
+    UserLogin, UserRole, UserClaim>
+    {
+        public UserStore(ApplicationDbContext context) : base(context)
+        {
+        }
+    }
+
+    public class Role : IdentityRole<int, UserRole>
+    {
+        public Role() { }
+        public Role(string name) { Name = name; }
+    }
+    // You can add profile data for the user by adding more properties to your ApplicationUser class, please visit https://go.microsoft.com/fwlink/?LinkID=317594 to learn more.
+    public class ApplicationUser : IdentityUser<int, UserLogin, UserRole, UserClaim>
+    {
+        public async Task<ClaimsIdentity> GenerateUserIdentityAsync(ApplicationUserManager manager)
         {
             // Note the authenticationType must match the one defined in CookieAuthenticationOptions.AuthenticationType
             var userIdentity = await manager.CreateIdentityAsync(this, DefaultAuthenticationTypes.ApplicationCookie);
@@ -18,10 +44,11 @@ namespace Account.Models
         }
     }
 
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Role, int,
+    UserLogin, UserRole, UserClaim>
     {
         public ApplicationDbContext()
-            : base("PfrConnection", throwIfV1Schema: false)
+            : base("PfrConnection")
         {
 
         }
@@ -37,10 +64,10 @@ namespace Account.Models
             base.OnModelCreating(modelBuilder);
             modelBuilder.HasDefaultSchema("dbo");
             modelBuilder.Entity<ApplicationUser>().ToTable("User").HasKey(u => u.Id);
-            modelBuilder.Entity<IdentityRole>().ToTable("Role");
-            modelBuilder.Entity<IdentityUserRole>().ToTable("UserRole");
-            modelBuilder.Entity<IdentityUserClaim>().ToTable("UserClaim");
-            modelBuilder.Entity<IdentityUserLogin>().ToTable("UserLogin");
+            modelBuilder.Entity<Role>().ToTable("Role");//.HasKey(r => r.Id);
+            modelBuilder.Entity<UserRole>().ToTable("UserRole");//.HasKey(ur => ur.Id);
+            modelBuilder.Entity<UserClaim>().ToTable("UserClaim");//.HasKey(uc => uc.Id);
+            modelBuilder.Entity<UserLogin>().ToTable("UserLogin");//.HasKey(ul => ul.Id); ;
         }
     }
 }
